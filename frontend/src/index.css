@@ -1,4 +1,15 @@
-body {
-  margin: 0;
-  background-color: #0a0a0a;
+*, *::before, *::after {
+  box-sizing: border-box;
 }
+
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  background-color: #0a0a0a;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+git add .
+git commit -m "Fix dark background on body"
+git push
