@@ -10,6 +10,3 @@ body, html, #root {
   min-height: 100vh;
 }
 
-git add .
-git commit -m "Fix dark background on body"
-git push
