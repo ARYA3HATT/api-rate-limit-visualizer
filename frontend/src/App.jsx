@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import TestForm from './components/TestForm';
 import LiveChart from './components/LiveChart';
 import ResultsSummary from './components/ResultsSummary';
+
+const BACKEND_URL = "https://api-rate-limit-visualizer-production.up.railway.app";
 
 function App() {
   const [isRunning, setIsRunning] = useState(false);
@@ -16,7 +18,7 @@ function App() {
 
   const fetchSummary = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/test/${id}/summary`);
+      const response = await fetch(`${BACKEND_URL}/api/test/${id}/summary`);
       const data = await response.json();
       setSummary(data);
     } catch (error) {
@@ -25,15 +27,13 @@ function App() {
   };
 
   const startTest = async (config) => {
-    // Reset state
     setChartData({ timestamps: [], responseTimes: [], statusCodes: {}, errors: [] });
     setIsComplete(false);
     setSummary(null);
     setRateLimitHeaders({});
 
     try {
-      // STEP 1: Get a test_id first without starting the test
-      const response = await fetch("http://localhost:8000/api/run-test", {
+      const response = await fetch(`${BACKEND_URL}/api/run-test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config)
@@ -42,8 +42,7 @@ function App() {
       const data = await response.json();
       const testId = data.test_id;
 
-      // STEP 2: Open WebSocket immediately
-      const ws = new WebSocket(`ws://localhost:8000/ws/${testId}`);
+      const ws = new WebSocket(`wss://${BACKEND_URL.replace("https://", "")}/ws/${testId}`);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -98,7 +97,6 @@ function App() {
         console.log('WebSocket closed');
       };
 
-      // Show dashboard immediately
       setIsRunning(true);
 
     } catch (error) {
@@ -108,30 +106,42 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "sans-serif", maxWidth: "1200px", margin: "0 auto" }}>
-      <h1>API Rate Limit Visualizer</h1>
+    <div style={{
+      minHeight: "100vh",
+      backgroundColor: "#0a0a0a",
+      color: "#e0e0e0",
+      padding: "2rem",
+      fontFamily: "sans-serif"
+    }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <h1 style={{ color: "#ffffff", borderBottom: "1px solid #333", paddingBottom: "1rem" }}>
+          ⚡ API Rate Limit Visualizer
+        </h1>
 
-      {!isRunning && !isComplete && (
-        <TestForm onStart={startTest} isRunning={isRunning} />
-      )}
+        {!isRunning && !isComplete && (
+          <TestForm onStart={startTest} isRunning={isRunning} />
+        )}
 
-      {(isRunning || isComplete) && (
-        <div style={{ marginTop: "2rem" }}>
-          <h2>Live Dashboard {isRunning && <span style={{ fontSize: "1rem", color: "#007bff" }}>● Running...</span>}</h2>
-          <LiveChart data={chartData} />
-          {isComplete && summary && (
-            <ResultsSummary
-              summary={summary}
-              rateLimitHeaders={rateLimitHeaders}
-              onReset={() => {
-                setIsComplete(false);
-                setIsRunning(false);
-                if (wsRef.current) wsRef.current.close();
-              }}
-            />
-          )}
-        </div>
-      )}
+        {(isRunning || isComplete) && (
+          <div style={{ marginTop: "2rem" }}>
+            <h2 style={{ color: "#ffffff" }}>
+              Live Dashboard {isRunning && <span style={{ fontSize: "1rem", color: "#00bfff" }}>● Running...</span>}
+            </h2>
+            <LiveChart data={chartData} />
+            {isComplete && summary && (
+              <ResultsSummary
+                summary={summary}
+                rateLimitHeaders={rateLimitHeaders}
+                onReset={() => {
+                  setIsComplete(false);
+                  setIsRunning(false);
+                  if (wsRef.current) wsRef.current.close();
+                }}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
