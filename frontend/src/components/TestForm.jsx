@@ -70,7 +70,7 @@ export default function TestForm({ onStart, isRunning }) {
                 <option value="POST">POST</option>
               </select>
               <input
-                type="url" value={url} onChange={e => setUrl(e.target.value)}
+                type="text" value={url} onChange={e => setUrl(e.target.value)}
                 placeholder="https://api.example.com/endpoint"
                 required style={{ ...inputStyle, flex: 1 }}
                 onFocus={e => e.target.style.borderColor = 'var(--accent-mid)'}
